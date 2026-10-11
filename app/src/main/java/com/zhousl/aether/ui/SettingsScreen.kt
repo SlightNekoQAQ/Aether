@@ -6003,18 +6003,21 @@ private fun AgentModeSettingsPage(
                     style = MaterialTheme.typography.labelMedium,
                     color = AetherOnSurface,
                 )
-                AgentModeDisplayOrientation.entries.forEach { orientation ->
-                    SettingsChoiceRow(
-                        title = stringResource(when (orientation) {
-                            AgentModeDisplayOrientation.Device -> R.string.settings_agent_mode_orientation_device
-                            AgentModeDisplayOrientation.Portrait -> R.string.settings_agent_mode_orientation_portrait
-                            AgentModeDisplayOrientation.Landscape -> R.string.settings_agent_mode_orientation_landscape
-                        }),
-                        subtitle = "",
-                        selected = displayOrientation == orientation,
-                        onClick = { onDisplayOrientationChanged(orientation) },
-                    )
+                Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
+                    AgentModeDisplayOrientation.entries.forEach { orientation ->
+                        SettingsChoiceRow(
+                            title = stringResource(when (orientation) {
+                                AgentModeDisplayOrientation.Device -> R.string.settings_agent_mode_orientation_device
+                                AgentModeDisplayOrientation.Portrait -> R.string.settings_agent_mode_orientation_portrait
+                                AgentModeDisplayOrientation.Landscape -> R.string.settings_agent_mode_orientation_landscape
+                            }),
+                            subtitle = "",
+                            selected = displayOrientation == orientation,
+                            onClick = { onDisplayOrientationChanged(orientation) },
+                        )
+                    }
                 }
+                Spacer(Modifier.height(10.dp))
                 Text(
                     text = stringResource(R.string.settings_agent_mode_orientation_hint),
                     style = MaterialTheme.typography.bodySmall,

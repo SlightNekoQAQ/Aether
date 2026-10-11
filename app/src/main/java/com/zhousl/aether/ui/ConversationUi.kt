@@ -3471,6 +3471,18 @@ private fun AgentModeLivePreviewSurface(
     val latestOnAttachSurface by rememberUpdatedState(onAttachSurface)
     val latestOnDetachSurface by rememberUpdatedState(onDetachSurface)
     var attachedSurface by remember { mutableStateOf<Surface?>(null) }
+    val capturingPreview by rememberUpdatedState(displayState.isCapturingPreview)
+    var previewView by remember { mutableStateOf<TextureView?>(null) }
+    var captureCover by remember { mutableStateOf<android.graphics.Bitmap?>(null) }
+    LaunchedEffect(displayState.isCapturingPreview) {
+        if (displayState.isCapturingPreview) {
+            captureCover = runCatching { previewView?.bitmap }.getOrNull()
+        } else {
+            // Keep the last frame until the preview receives a frame after capture.
+            delay(250)
+            captureCover = null
+        }
+    }
 
     fun fixedWidth() = displayState.width.coerceAtLeast(1)
     fun fixedHeight() = displayState.height.coerceAtLeast(1)
@@ -3495,44 +3507,58 @@ private fun AgentModeLivePreviewSurface(
         }
     }
 
-    AndroidView(
-        modifier = modifier.background(Color.Black),
-        factory = { context ->
-            TextureView(context).apply {
-                isOpaque = true
-                surfaceTextureListener = object : TextureView.SurfaceTextureListener {
-                    override fun onSurfaceTextureAvailable(
-                        surfaceTexture: SurfaceTexture,
-                        width: Int,
-                        height: Int,
-                    ) {
-                        attach(surfaceTexture)
-                    }
+    Box(modifier = modifier.background(Color.Black)) {
+        AndroidView(
+            modifier = Modifier.fillMaxSize().background(Color.Black),
+            factory = { context ->
+                TextureView(context).apply {
+                    previewView = this
+                    isOpaque = true
+                    surfaceTextureListener = object : TextureView.SurfaceTextureListener {
+                        override fun onSurfaceTextureAvailable(
+                            surfaceTexture: SurfaceTexture,
+                            width: Int,
+                            height: Int,
+                        ) {
+                            attach(surfaceTexture)
+                        }
 
-                    override fun onSurfaceTextureSizeChanged(
-                        surfaceTexture: SurfaceTexture,
-                        width: Int,
-                        height: Int,
-                    ) {
-                        surfaceTexture.setDefaultBufferSize(fixedWidth(), fixedHeight())
-                    }
+                        override fun onSurfaceTextureSizeChanged(
+                            surfaceTexture: SurfaceTexture,
+                            width: Int,
+                            height: Int,
+                        ) {
+                            surfaceTexture.setDefaultBufferSize(fixedWidth(), fixedHeight())
+                        }
 
-                    override fun onSurfaceTextureDestroyed(surfaceTexture: SurfaceTexture): Boolean {
-                        detach()
-                        return true
-                    }
+                        override fun onSurfaceTextureDestroyed(surfaceTexture: SurfaceTexture): Boolean {
+                            detach()
+                            return true
+                        }
 
-                    override fun onSurfaceTextureUpdated(surfaceTexture: SurfaceTexture) = Unit
+                        override fun onSurfaceTextureUpdated(surfaceTexture: SurfaceTexture) {
+                            if (!capturingPreview) captureCover = null
+                        }
+                    }
                 }
-            }
-        },
-        update = { view ->
-            view.surfaceTexture?.setDefaultBufferSize(fixedWidth(), fixedHeight())
-            if (displayState.isActive) {
-                attach(view.surfaceTexture)
-            }
-        },
-    )
+            },
+            update = { view ->
+                view.surfaceTexture?.setDefaultBufferSize(fixedWidth(), fixedHeight())
+                if (displayState.isActive) {
+                    attach(view.surfaceTexture)
+                }
+            },
+        )
+        captureCover?.let { cover ->
+            Image(
+                bitmap = cover.asImageBitmap(),
+                contentDescription = null,
+                modifier = Modifier.fillMaxSize(),
+                contentScale = ContentScale.Fit,
+            )
+        }
+    }
+
 }
 
 @Composable

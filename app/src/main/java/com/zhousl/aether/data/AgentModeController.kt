@@ -64,6 +64,7 @@ data class AgentModeDisplayState(
     val cursorY: Int? = null,
     val cursorAnimationDurationMillis: Int = 220,
     val isLivePreviewActive: Boolean = false,
+    val isCapturingPreview: Boolean = false,
     val lastUpdatedMillis: Long = 0L,
     val status: String = "",
 )
@@ -840,6 +841,7 @@ class AgentModeController(
         captureMutex.withLock {
             outputFile.parentFile?.mkdirs()
             runCatching { outputFile.delete() }
+            _displayState.value = _displayState.value.copy(isCapturingPreview = true)
             try {
                 ParcelFileDescriptor.open(
                     outputFile,
@@ -857,6 +859,8 @@ class AgentModeController(
             } catch (throwable: Throwable) {
                 runCatching { outputFile.delete() }
                 throw throwable
+            } finally {
+                _displayState.value = _displayState.value.copy(isCapturingPreview = false)
             }
         }
     }
