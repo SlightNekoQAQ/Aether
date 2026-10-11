@@ -213,6 +213,7 @@ class AgentModeController(
                 )
             }
         val action = arguments.optString("action").trim().lowercase()
+        val previousOrientationOverride = displayOrientationOverride
         if (action == "launch" && arguments.optString("target").trim().isBlank()) {
             return@withContext invalidArguments("Missing required 'target' argument.")
         }
@@ -388,6 +389,10 @@ class AgentModeController(
                 )
             }
         }.getOrElse { throwable ->
+            // Do not keep an override from a request that failed to create its managed display.
+            if (arguments.has("orientation") && createdDisplayOrientation != displayOrientationOverride) {
+                displayOrientationOverride = previousOrientationOverride
+            }
             captureAgentModeFailed(
                 settings = settings,
                 action = action.ifBlank { "unknown" },
