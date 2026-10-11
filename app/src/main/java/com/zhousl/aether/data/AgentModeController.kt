@@ -213,6 +213,16 @@ class AgentModeController(
                 )
             }
         val action = arguments.optString("action").trim().lowercase()
+        if (arguments.has("orientation")) {
+            if (action != "start" && action != "launch") {
+                return@withContext invalidArguments("'orientation' is only supported for start or launch.")
+            }
+            val value = arguments.optString("orientation").trim().lowercase()
+            val orientation = AgentModeDisplayOrientation.entries.firstOrNull { it.storageValue == value }
+                ?: return@withContext invalidArguments("orientation must be device, portrait, or landscape.")
+            // An explicit override lasts for this managed display session, not the saved preference.
+            displayOrientationOverride = orientation
+        }
         diagnosticLogger.event(
             category = "agent_mode",
             event = "action_start",
@@ -345,7 +355,7 @@ class AgentModeController(
                 )
             }
             "stop" -> {
-                releaseDisplay()
+                stopDisplay()
                 JSONObject().apply {
                     put("ok", true)
                     put("stdout", "Agent Mode virtual display stopped.")
@@ -457,16 +467,20 @@ class AgentModeController(
         }.also { _authorizationState.value = it }
     }
 
+    private var displayOrientationOverride: AgentModeDisplayOrientation? = null
+    private var createdDisplayOrientation: AgentModeDisplayOrientation? = null
+
     private suspend fun ensureDisplay(settings: AppSettings): Int {
+        val orientation = displayOrientationOverride ?: settings.agentModeDisplayOrientation
         val service = requireAgentModeService(settings)
         val serviceBinder = service.asBinder()
         shizukuDisplayId?.let { displayId ->
-            if (isCurrentDisplayOwner(settings, serviceBinder)) {
+            if (isCurrentDisplayOwner(settings, serviceBinder) && createdDisplayOrientation == orientation) {
                 return displayId
             }
-            releaseDisplay("Virtual display reset because Agent Mode authorization service changed.")
+            releaseDisplay("Virtual display reset because Agent Mode service or orientation changed. Relaunch the target app.")
         }
-        val displaySpec = currentDeviceDisplaySpec()
+        val displaySpec = currentDeviceDisplaySpec(orientation)
         val displayId = service.createOwnedDisplay(
             AgentDisplayName,
             displaySpec.width,
@@ -474,6 +488,7 @@ class AgentModeController(
             displaySpec.densityDpi,
         )
         shizukuDisplayId = displayId
+        createdDisplayOrientation = orientation
         displayOwnerMethod = settings.agentModeAuthorizationMethod
         displayOwnerBinder = serviceBinder
         diagnosticLogger.event(
@@ -501,6 +516,7 @@ class AgentModeController(
     }
 
     fun stopDisplay() {
+        displayOrientationOverride = null
         releaseDisplay()
     }
 
@@ -894,6 +910,7 @@ class AgentModeController(
             }
         }
         shizukuDisplayId = null
+        createdDisplayOrientation = null
         displayOwnerMethod = null
         displayOwnerBinder = null
         _displayState.value = AgentModeDisplayState(
@@ -1353,19 +1370,24 @@ class AgentModeController(
         put("stdout", "")
     }.toString()
 
-    private fun currentDeviceDisplaySpec(): DisplaySpec {
+    private fun currentDeviceDisplaySpec(orientation: AgentModeDisplayOrientation): DisplaySpec {
         val display = displayManager.getDisplay(Display.DEFAULT_DISPLAY)
         val size = Point()
         @Suppress("DEPRECATION")
         display?.getRealSize(size)
         val metrics = context.resources.displayMetrics
+        val width = (display?.mode?.physicalWidth ?: size.x).takeIf { it > 0 }
+            ?: metrics.widthPixels.takeIf { it > 0 }
+            ?: FallbackAgentDisplayWidth
+        val height = (display?.mode?.physicalHeight ?: size.y).takeIf { it > 0 }
+            ?: metrics.heightPixels.takeIf { it > 0 }
+            ?: FallbackAgentDisplayHeight
+        val dimensions = agentModeDisplayDimensions(width, height, orientation)
+        // The display, ImageReader, preview state and normalized input all share these dimensions.
+        // Recreate rather than rotate only the output Surface, which would leave capture/input stale.
         return DisplaySpec(
-            width = (display?.mode?.physicalWidth ?: size.x).takeIf { it > 0 }
-                ?: metrics.widthPixels.takeIf { it > 0 }
-                ?: FallbackAgentDisplayWidth,
-            height = (display?.mode?.physicalHeight ?: size.y).takeIf { it > 0 }
-                ?: metrics.heightPixels.takeIf { it > 0 }
-                ?: FallbackAgentDisplayHeight,
+            width = dimensions.first,
+            height = dimensions.second,
             densityDpi = metrics.densityDpi.takeIf { it > 0 } ?: FallbackAgentDisplayDensityDpi,
         )
     }

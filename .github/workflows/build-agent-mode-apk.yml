@@ -1,0 +1,47 @@
+name: Build Agent Mode APK
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [fix/agent-mode-display-orientation]
+
+permissions:
+  contents: read
+
+concurrency:
+  group: agent-mode-apk-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  android:
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          persist-credentials: false
+      - uses: actions/setup-java@v5
+        with:
+          distribution: temurin
+          java-version: '17'
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22.19.0'
+          cache: npm
+          cache-dependency-path: pi-bridge/package-lock.json
+      - uses: gradle/actions/setup-gradle@v6
+      - uses: android-actions/setup-android@v4
+        with:
+          packages: platform-tools
+      - run: chmod +x ./gradlew
+      - name: Unit tests
+        run: ./gradlew :shared:testDebugUnitTest :app:testDebugUnitTest --stacktrace
+      - name: Build unsigned release APK (original application ID)
+        run: ./gradlew :app:assembleRelease --stacktrace -Paether.versionName="2.1.6-landscape-${GITHUB_SHA::7}"
+      - name: Upload unsigned APK
+        uses: actions/upload-artifact@v7
+        with:
+          name: Aether-agent-mode-unsigned-${{ github.sha }}
+          path: app/build/outputs/apk/release/*-unsigned.apk
+          if-no-files-found: error
+          retention-days: 14

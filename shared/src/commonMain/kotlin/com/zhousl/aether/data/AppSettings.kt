@@ -38,6 +38,19 @@ enum class AgentModeAuthorizationMethod(
     }
 }
 
+/** Android Agent Mode managed-display geometry; Device preserves the existing physical size. */
+@Serializable
+enum class AgentModeDisplayOrientation(val storageValue: String) {
+    Device("device"),
+    Portrait("portrait"),
+    Landscape("landscape");
+
+    companion object {
+        fun fromStorage(value: String?): AgentModeDisplayOrientation =
+            entries.firstOrNull { it.storageValue == value } ?: Device
+    }
+}
+
 @Serializable
 enum class AppLanguage(
     val storageValue: String,
@@ -164,6 +177,7 @@ data class AppSettings(
     val alpineEnvironmentVariables: List<AlpineEnvironmentVariable> = emptyList(),
     val agentModeAuthorizationEnabled: Boolean = false,
     val agentModeAuthorizationMethod: AgentModeAuthorizationMethod = AgentModeAuthorizationMethod.Shizuku,
+    val agentModeDisplayOrientation: AgentModeDisplayOrientation = AgentModeDisplayOrientation.Device,
     val language: AppLanguage = defaultAppLanguage(),
     val themeMode: AppThemeMode = AppThemeMode.System,
     val defaultChatModelKey: String = "",

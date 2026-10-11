@@ -3243,20 +3243,23 @@ private fun AgentModePreviewPanel(
                     label = "agent_mode_cursor_offset",
                 )
                 if (displayState.isActive && useLiveSurface) {
-                    AgentModeLivePreviewSurface(
-                        displayState = displayState,
-                        onAttachSurface = onAttachSurface,
-                        onDetachSurface = onDetachSurface,
-                        modifier = Modifier
-                            .fillMaxHeight()
-                            .padding(10.dp)
-                            .aspectRatio(
-                                displayState.width.coerceAtLeast(1).toFloat() /
-                                    displayState.height.coerceAtLeast(1).toFloat(),
-                                matchHeightConstraintsFirst = true,
-                            )
-                            .clip(RoundedCornerShape(14.dp)),
-                    )
+                    // Replace listeners capturing old buffer dimensions after a display recreation.
+                    key(displayState.displayId, displayState.width, displayState.height) {
+                        AgentModeLivePreviewSurface(
+                            displayState = displayState,
+                            onAttachSurface = onAttachSurface,
+                            onDetachSurface = onDetachSurface,
+                            modifier = Modifier
+                                .fillMaxHeight()
+                                .padding(10.dp)
+                                .aspectRatio(
+                                    displayState.width.coerceAtLeast(1).toFloat() /
+                                        displayState.height.coerceAtLeast(1).toFloat(),
+                                    matchHeightConstraintsFirst = true,
+                                )
+                                .clip(RoundedCornerShape(14.dp)),
+                        )
+                    }
                 } else if (displayState.isActive && !useLiveSurface) {
                     PlatformWebView(
                         url = AlpineChromeViewerUrl,

@@ -53,6 +53,15 @@ class AetherToolExecutorTest {
     }
 
     @Test
+    fun agentDisplayExposesExplicitOrientationOverride() {
+        val definition = AetherToolExecutor.hostToolDefinitions(agentModeEnabled = true).getJSONObject(0)
+        val orientation = definition.getJSONObject("parameters")
+            .getJSONObject("properties").getJSONObject("orientation")
+        assertEquals(listOf("device", "portrait", "landscape"),
+            (0 until orientation.getJSONArray("enum").length()).map { orientation.getJSONArray("enum").getString(it) })
+    }
+
+    @Test
     fun inferToolOutputOkHonorsAetherJsonFlags() {
         assertTrue(AetherToolExecutor.inferToolOutputOk("""{"ok":true}"""))
         assertFalse(AetherToolExecutor.inferToolOutputOk("""{"ok":false}"""))

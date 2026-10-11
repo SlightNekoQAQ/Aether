@@ -407,11 +407,22 @@ class AetherSelfManagementTool(
                 } else {
                     current.agentModeAuthorizationMethod
                 },
+                agentModeDisplayOrientation = if (patch.has("display_orientation")) {
+                    val value = patch.optString("display_orientation")
+                    AgentModeDisplayOrientation.entries.firstOrNull { it.storageValue == value }
+                        ?: return failure("display_orientation must be device, portrait, or landscape.")
+                } else {
+                    current.agentModeDisplayOrientation
+                },
             )
 
             else -> return failure("Unsupported or read-only category '$category'.")
         }
         if (category == "agent_mode") {
+            if (updated.agentModeDisplayOrientation != current.agentModeDisplayOrientation) {
+                agentModeController.stopDisplay()
+                settingsRepository.updateAgentModeDisplayOrientation(updated.agentModeDisplayOrientation)
+            }
             settingsRepository.updateAgentModeAuthorization(
                 updated.agentModeAuthorizationEnabled,
                 updated.agentModeAuthorizationMethod,
@@ -797,6 +808,7 @@ class AetherSelfManagementTool(
         JSONObject()
             .put("authorization_enabled", settings.agentModeAuthorizationEnabled)
             .put("authorization_method", settings.agentModeAuthorizationMethod.storageValue)
+            .put("display_orientation", settings.agentModeDisplayOrientation.storageValue)
             .put("authorization", agentModeAuthorizationStateJson(agentModeController.authorizationState.value))
             .put("display", agentModeDisplayStateJson(agentModeController.displayState.value))
 

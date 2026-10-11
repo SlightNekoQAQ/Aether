@@ -17,6 +17,7 @@ import com.zhousl.aether.data.AetherModServiceMethod
 import com.zhousl.aether.data.AppUpdateManager
 import com.zhousl.aether.data.AutomaticModelPurpose
 import com.zhousl.aether.data.AgentModeAuthorizationMethod
+import com.zhousl.aether.data.AgentModeDisplayOrientation
 import com.zhousl.aether.data.AgentWorkspaceMode
 import com.zhousl.aether.data.AlpineEnvironmentVariable
 import com.zhousl.aether.data.AppLanguage
@@ -2490,6 +2491,18 @@ class AetherViewModel(
         }
         viewModelScope.launch {
             settingsRepository.updateDefaultModelKeys(chat, title, naming, compacting)
+        }
+    }
+
+    fun saveAgentModeDisplayOrientation(orientation: AgentModeDisplayOrientation) {
+        if (_uiState.value.settings.agentModeDisplayOrientation == orientation) return
+        // Recreate capture and preview surfaces together on the next launch.
+        agentModeController.stopDisplay()
+        _uiState.update { current ->
+            current.copy(settings = current.settings.copy(agentModeDisplayOrientation = orientation))
+        }
+        viewModelScope.launch {
+            settingsRepository.updateAgentModeDisplayOrientation(orientation)
         }
     }
 
@@ -6048,6 +6061,7 @@ class AetherViewModel(
         put("oldCommandHistoryRetentionHours", oldCommandHistoryRetentionHours)
         put("agentModeAuthorizationEnabled", agentModeAuthorizationEnabled)
         put("agentModeAuthorizationMethod", agentModeAuthorizationMethod.storageValue)
+        put("agentModeDisplayOrientation", agentModeDisplayOrientation.storageValue)
         put("language", language.storageValue)
         put("themeMode", themeMode.storageValue)
         put("defaultChatModelKey", defaultChatModelKey)
@@ -6151,6 +6165,9 @@ class AetherViewModel(
             agentModeAuthorizationMethod = AgentModeAuthorizationMethod.fromStorage(
                 json.optString("agentModeAuthorizationMethod"),
                 defaults.agentModeAuthorizationMethod,
+            ),
+            agentModeDisplayOrientation = AgentModeDisplayOrientation.fromStorage(
+                json.optString("agentModeDisplayOrientation"),
             ),
             language = AppLanguage.fromStorage(
                 json.optString("language"),

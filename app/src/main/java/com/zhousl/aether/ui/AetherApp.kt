@@ -1115,6 +1115,8 @@ private fun AetherAppContent(
                     appUpdate = uiState.appUpdate,
                     onSave = viewModel::saveSettings,
                     onSaveDefaultModelKeys = viewModel::saveDefaultModelKeys,
+                    agentModeDisplayOrientation = uiState.settings.agentModeDisplayOrientation,
+                    onSaveAgentModeDisplayOrientation = viewModel::saveAgentModeDisplayOrientation,
                     onSaveAgentModeAuthorization = viewModel::saveAgentModeAuthorization,
                     onUpdateLanguage = { language ->
                         viewModel.updateAppLanguage(language)

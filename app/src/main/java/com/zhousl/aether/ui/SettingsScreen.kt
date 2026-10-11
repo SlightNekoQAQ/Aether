@@ -140,6 +140,7 @@ import kotlin.math.roundToInt
 import com.zhousl.aether.data.AetherAppExtensionError
 import com.zhousl.aether.data.AgentModeAuthorizationIssue
 import com.zhousl.aether.data.AgentModeAuthorizationMethod
+import com.zhousl.aether.data.AgentModeDisplayOrientation
 import com.zhousl.aether.data.AgentModeAuthorizationState
 import com.zhousl.aether.data.AgentModeDisplayState
 import com.zhousl.aether.data.AgentWorkspaceMode
@@ -462,6 +463,8 @@ fun SettingsScreen(
         List<TermuxEnvironmentVariable>,
     ) -> Unit,
     onSaveDefaultModelKeys: (String, String, String, String) -> Unit,
+    agentModeDisplayOrientation: AgentModeDisplayOrientation,
+    onSaveAgentModeDisplayOrientation: (AgentModeDisplayOrientation) -> Unit,
     onSaveAgentModeAuthorization: (Boolean, AgentModeAuthorizationMethod) -> Unit,
     onUpdateLanguage: (AppLanguage) -> Unit,
     onUpdateThemeMode: (AppThemeMode) -> Unit,
@@ -1246,6 +1249,8 @@ fun SettingsScreen(
                     agentModeAuthorizationMethodValue = it
                     onSaveAgentModeAuthorization(agentModeAuthorizationEnabledValue, it)
                 },
+                displayOrientation = agentModeDisplayOrientation,
+                onDisplayOrientationChanged = onSaveAgentModeDisplayOrientation,
                 agentModeDisplayState = agentModeDisplayState,
                 onRequestShizukuPermission = onRequestShizukuPermission,
                 onRefreshAgentModeAuthorization = onRefreshAgentModeAuthorization,
@@ -5797,6 +5802,8 @@ private fun AgentModeSettingsPage(
     rootSetupState: RootSetupState,
     onAgentModeAuthorizationEnabledChanged: (Boolean) -> Unit,
     onAgentModeAuthorizationMethodChanged: (AgentModeAuthorizationMethod) -> Unit,
+    displayOrientation: AgentModeDisplayOrientation,
+    onDisplayOrientationChanged: (AgentModeDisplayOrientation) -> Unit,
     agentModeDisplayState: AgentModeDisplayState,
     onRequestShizukuPermission: () -> Unit,
     onRefreshAgentModeAuthorization: (Boolean, AgentModeAuthorizationMethod) -> Unit,
@@ -5987,6 +5994,29 @@ private fun AgentModeSettingsPage(
                     } else {
                         stringResource(R.string.settings_agent_mode_no_virtual_display)
                     },
+                    style = MaterialTheme.typography.bodySmall,
+                    color = AetherOnSurfaceVariant,
+                )
+                Spacer(Modifier.height(12.dp))
+                Text(
+                    text = stringResource(R.string.settings_agent_mode_orientation),
+                    style = MaterialTheme.typography.labelMedium,
+                    color = AetherOnSurface,
+                )
+                AgentModeDisplayOrientation.entries.forEach { orientation ->
+                    SettingsChoiceRow(
+                        title = stringResource(when (orientation) {
+                            AgentModeDisplayOrientation.Device -> R.string.settings_agent_mode_orientation_device
+                            AgentModeDisplayOrientation.Portrait -> R.string.settings_agent_mode_orientation_portrait
+                            AgentModeDisplayOrientation.Landscape -> R.string.settings_agent_mode_orientation_landscape
+                        }),
+                        subtitle = "",
+                        selected = displayOrientation == orientation,
+                        onClick = { onDisplayOrientationChanged(orientation) },
+                    )
+                }
+                Text(
+                    text = stringResource(R.string.settings_agent_mode_orientation_hint),
                     style = MaterialTheme.typography.bodySmall,
                     color = AetherOnSurfaceVariant,
                 )

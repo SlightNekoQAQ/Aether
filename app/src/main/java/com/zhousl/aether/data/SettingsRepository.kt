@@ -154,6 +154,9 @@ class SettingsRepository(
                 preferences[AGENT_MODE_AUTHORIZATION_METHOD],
                 defaultValue = defaultAgentModeAuthorizationMethod(context),
             ),
+            agentModeDisplayOrientation = AgentModeDisplayOrientation.fromStorage(
+                preferences[AGENT_MODE_DISPLAY_ORIENTATION],
+            ),
             language = AppLanguage.fromStorage(preferences[LANGUAGE]),
             themeMode = AppThemeMode.fromStorage(preferences[THEME_MODE]),
             defaultChatModelKey = preferences[DEFAULT_CHAT_MODEL_KEY].orEmpty(),
@@ -453,6 +456,7 @@ class SettingsRepository(
                 serializeAlpineEnvironmentVariables(settings.alpineEnvironmentVariables)
             it[AGENT_MODE_AUTHORIZATION_ENABLED] = settings.agentModeAuthorizationEnabled
             it[AGENT_MODE_AUTHORIZATION_METHOD] = settings.agentModeAuthorizationMethod.storageValue
+            it[AGENT_MODE_DISPLAY_ORIENTATION] = settings.agentModeDisplayOrientation.storageValue
             it[LANGUAGE] = settings.language.storageValue
             it[THEME_MODE] = settings.themeMode.storageValue
             it[DEFAULT_CHAT_MODEL_KEY] = settings.defaultChatModelKey
@@ -516,6 +520,10 @@ class SettingsRepository(
             it[LANGUAGE] = settings.language.storageValue
             it[THEME_MODE] = settings.themeMode.storageValue
         }
+    }
+
+    suspend fun updateAgentModeDisplayOrientation(orientation: AgentModeDisplayOrientation) {
+        context.dataStore.edit { it[AGENT_MODE_DISPLAY_ORIENTATION] = orientation.storageValue }
     }
 
     suspend fun updateAgentModeAuthorization(
@@ -681,6 +689,8 @@ class SettingsRepository(
             booleanPreferencesKey("agent_mode_authorization_enabled")
         val AGENT_MODE_AUTHORIZATION_METHOD =
             stringPreferencesKey("agent_mode_authorization_method")
+        val AGENT_MODE_DISPLAY_ORIENTATION =
+            stringPreferencesKey("agent_mode_display_orientation")
         val LANGUAGE = stringPreferencesKey("language")
         val THEME_MODE = stringPreferencesKey("theme_mode")
         val DEFAULT_CHAT_MODEL_KEY = stringPreferencesKey("default_chat_model_key")

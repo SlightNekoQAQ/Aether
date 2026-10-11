@@ -21,6 +21,7 @@ class AppSettingsSerializationTest {
             defaultRuntimeId = LocalRuntimeId.Alpine,
             alpinePackageProfiles = mapOf("chrome" to PackageProfileState("chrome", installed = true)),
             alpineEnvironmentVariables = listOf(AlpineEnvironmentVariable("A", "B")),
+            agentModeDisplayOrientation = AgentModeDisplayOrientation.Landscape,
             language = AppLanguage.SimplifiedChinese,
             themeMode = AppThemeMode.Dark,
             defaultChatModelKey = "provider/chat-model",
@@ -43,6 +44,14 @@ class AppSettingsSerializationTest {
 
         assertEquals(AppThemeMode.Dark, parsed.themeMode)
         assertEquals(DefaultReasoningEffort, parsed.reasoningEffort)
+    }
+
+    @Test
+    fun legacySettingsUseDeviceOrientation() {
+        assertEquals(AgentModeDisplayOrientation.Device, parseAppSettings("{}").agentModeDisplayOrientation)
+        assertEquals(AgentModeDisplayOrientation.Device, AgentModeDisplayOrientation.fromStorage(null))
+        assertEquals(AgentModeDisplayOrientation.Device, AgentModeDisplayOrientation.fromStorage("future"))
+        assertEquals(AgentModeDisplayOrientation.Landscape, AgentModeDisplayOrientation.fromStorage("landscape"))
     }
 
     @Test
