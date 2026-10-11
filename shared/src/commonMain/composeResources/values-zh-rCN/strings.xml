@@ -1056,4 +1056,6 @@
     <string name="settings_agent_mode_orientation_portrait">竖屏</string>
     <string name="settings_agent_mode_orientation_landscape">横屏</string>
     <string name="settings_agent_mode_orientation_hint">切换方向将停止当前虚拟屏幕，请随后重新启动应用。</string>
+    <string name="agent_mode_fullscreen">全屏观看</string>
+    <string name="agent_mode_exit_fullscreen">退出全屏</string>
 </resources>
