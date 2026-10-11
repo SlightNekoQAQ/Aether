@@ -4,6 +4,9 @@ import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
 import androidx.compose.ui.window.DialogWindowProvider
+import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.LifecycleEventObserver
+import androidx.lifecycle.compose.LocalLifecycleOwner
 import android.graphics.BitmapFactory
 import android.graphics.SurfaceTexture
 import android.os.Build
@@ -3189,8 +3192,20 @@ private fun AgentModePreviewPanel(
         contentDescription ?: stringResource(R.string.chat_agent_mode_virtual_display)
     val resolvedPendingText =
         pendingText ?: stringResource(R.string.chat_agent_mode_preview_pending)
-    var fullscreen by rememberSaveable { mutableStateOf(false) }
+    // Fullscreen is an explicit, foreground-only action, never restored from saved UI state.
+    var fullscreen by remember { mutableStateOf(false) }
     var showFullscreenButton by remember { mutableStateOf(false) }
+    val previewLifecycle = LocalLifecycleOwner.current.lifecycle
+    DisposableEffect(previewLifecycle) {
+        val observer = LifecycleEventObserver { _, event ->
+            if (event == Lifecycle.Event.ON_STOP) {
+                fullscreen = false
+                showFullscreenButton = false
+            }
+        }
+        previewLifecycle.addObserver(observer)
+        onDispose { previewLifecycle.removeObserver(observer) }
+    }
     val bitmap = remember(displayState.latestPreviewPath, displayState.lastUpdatedMillis) {
         displayState.latestPreviewPath
             .takeIf { it.isNotBlank() }

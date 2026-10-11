@@ -47,3 +47,5 @@ The optional Build Agent Mode APK workflow runs unit tests and produces an **uns
 Tap the preview frame to reveal the **Fullscreen** button below its bottom-right corner. Fullscreen opens an immersive, edge-to-edge viewer; use **Exit fullscreen** or Android Back to return. The viewer fits the source aspect ratio within both available axes without stretching or cropping, in portrait or landscape device layouts. It does not change the virtual display geometry or force the device orientation. Android rotation settings still apply.
 
 Only one live preview Surface (or Chrome WebView) is composed at a time: the inline view is removed while fullscreen is open. Cursor and message overlays remain visible. Hardware validation should additionally cover enter/exit, Back, device rotation, display stop/recreation while open, and screenshot capture during fullscreen.
+
+Fullscreen is foreground-only and is not restored from saved UI state. Moving Aether to the background exits fullscreen and hides its entry control, preventing a restored fullscreen dialog from flashing when reopening Aether.
