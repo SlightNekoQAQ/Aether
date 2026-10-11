@@ -213,6 +213,9 @@ class AgentModeController(
                 )
             }
         val action = arguments.optString("action").trim().lowercase()
+        if (action == "launch" && arguments.optString("target").trim().isBlank()) {
+            return@withContext invalidArguments("Missing required 'target' argument.")
+        }
         if (arguments.has("orientation")) {
             if (action != "start" && action != "launch") {
                 return@withContext invalidArguments("'orientation' is only supported for start or launch.")
@@ -864,6 +867,7 @@ class AgentModeController(
         return JSONObject().apply {
             put("ok", true)
             put("active", state.isActive)
+            put("orientation", (createdDisplayOrientation ?: settings.agentModeDisplayOrientation).storageValue)
             put("display_id", state.displayId)
             put("width", state.width)
             put("height", state.height)
